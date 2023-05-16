@@ -29,6 +29,7 @@ func KnownBuildTags() map[string]string {
 		"impala":        "impala",        // github.com/bippio/go-impala
 		"maxcompute":    "maxcompute",    // sqlflow.org/gomaxcompute
 		"moderncsqlite": "moderncsqlite", // modernc.org/sqlite
+		"mogdb":         "mogdb",         // gitee.com/opengauss/openGauss-connector-go-pq
 		"mymysql":       "mymysql",       // github.com/ziutek/mymysql/godrv
 		"mysql":         "mysql",         // github.com/go-sql-driver/mysql
 		"netezza":       "nzgo",          // github.com/IBM/nzgo/v12

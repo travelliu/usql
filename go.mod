@@ -3,6 +3,7 @@ module github.com/xo/usql
 go 1.20
 
 require (
+	gitee.com/opengauss/openGauss-connector-go-pq v1.0.4-0.20220808111146-0632413d94ba
 	github.com/ClickHouse/clickhouse-go/v2 v2.9.3
 	github.com/IBM/nzgo/v12 v12.0.8
 	github.com/MichaelS11/go-cql-driver v0.1.1
@@ -227,6 +228,7 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/twmb/murmur3 v1.1.7 // indirect
 	github.com/uber-go/tally v3.5.3+incompatible // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
@@ -285,3 +287,5 @@ require (
 	modernc.org/token v1.1.0 // indirect
 	modernc.org/zappy v1.0.8 // indirect
 )
+
+replace github.com/xo/dburl => github.com/travelliu/dburl v0.12.5-0.20221120054944-2fa3763f6972

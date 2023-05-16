@@ -2,7 +2,7 @@ package metadata
 
 import (
 	"strings"
-
+	
 	"github.com/xo/dburl"
 	"github.com/xo/usql/text"
 )
@@ -225,9 +225,22 @@ func NewSchemaSet(v []Schema) *SchemaSet {
 		},
 	}
 }
+func NewSchemaSetWithColumns(v []Result, cols []string) *SchemaSet {
+	return &SchemaSet{
+		resultSet: resultSet{
+			results: v,
+			columns: cols,
+		},
+	}
+}
 
-func (s SchemaSet) Get() *Schema {
-	return s.results[s.current-1].(*Schema)
+type SchemaProvider interface {
+	GetSchema() *Schema
+}
+
+func (t SchemaSet) Get() *Schema {
+	r := t.results[t.current-1]
+	return r.(SchemaProvider).GetSchema()
 }
 
 type Schema struct {
@@ -237,6 +250,10 @@ type Schema struct {
 
 func (s Schema) Values() []interface{} {
 	return []interface{}{s.Schema, s.Catalog}
+}
+
+func (s Schema) GetSchema() *Schema {
+	return &s
 }
 
 type TableSet struct {
@@ -266,8 +283,22 @@ func NewTableSet(v []Table) *TableSet {
 	}
 }
 
+func NewTableSetWithColumns(v []Result, cols []string) *TableSet {
+	return &TableSet{
+		resultSet: resultSet{
+			results: v,
+			columns: cols,
+		},
+	}
+}
+
+type TableProvider interface {
+	GetTable() *Table
+}
+
 func (t TableSet) Get() *Table {
-	return t.results[t.current-1].(*Table)
+	r := t.results[t.current-1]
+	return r.(TableProvider).GetTable()
 }
 
 type Table struct {
@@ -290,6 +321,10 @@ func (t Table) Values() []interface{} {
 		t.Size,
 		t.Comment,
 	}
+}
+
+func (t Table) GetTable() *Table {
+	return &t
 }
 
 type ColumnSet struct {

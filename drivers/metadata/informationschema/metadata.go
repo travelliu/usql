@@ -240,6 +240,7 @@ func (s InformationSchema) Columns(f metadata.Filter) (*metadata.ColumnSet, erro
 	results := []metadata.Column{}
 	for rows.Next() {
 		rec := metadata.Column{}
+		var colDefault *string
 		err = rows.Scan(
 			&rec.Catalog,
 			&rec.Schema,
@@ -247,7 +248,7 @@ func (s InformationSchema) Columns(f metadata.Filter) (*metadata.ColumnSet, erro
 			&rec.Name,
 			&rec.OrdinalPosition,
 			&rec.DataType,
-			&rec.Default,
+			&colDefault,
 			&rec.IsNullable,
 			&rec.ColumnSize,
 			&rec.DecimalDigits,
@@ -256,6 +257,9 @@ func (s InformationSchema) Columns(f metadata.Filter) (*metadata.ColumnSet, erro
 		)
 		if err != nil {
 			return nil, err
+		}
+		if colDefault != nil {
+			rec.Default = *colDefault
 		}
 		rec.DataType = s.dataTypeFormatter(rec)
 		results = append(results, rec)
@@ -410,7 +414,11 @@ func (s InformationSchema) Functions(f metadata.Filter) (*metadata.FunctionSet, 
 
 	results := []metadata.Function{}
 	for rows.Next() {
-		rec := metadata.Function{}
+		var (
+			rec                  = metadata.Function{}
+			resultType, language *string
+		)
+
 		err = rows.Scan(
 			&rec.SpecificName,
 			&rec.Catalog,
@@ -419,12 +427,18 @@ func (s InformationSchema) Functions(f metadata.Filter) (*metadata.FunctionSet, 
 			&rec.Type,
 			&rec.ResultType,
 			&rec.Source,
-			&rec.Language,
+			&language,
 			&rec.Volatility,
 			&rec.Security,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if resultType != nil {
+			rec.ResultType = *resultType
+		}
+		if language != nil {
+			rec.Language = *language
 		}
 		results = append(results, rec)
 	}
@@ -473,14 +487,17 @@ func (s InformationSchema) FunctionColumns(f metadata.Filter) (*metadata.Functio
 
 	results := []metadata.FunctionColumn{}
 	for rows.Next() {
-		rec := metadata.FunctionColumn{}
+		var (
+			rec                          = metadata.FunctionColumn{}
+			parameterName, parameterMode *string
+		)
 		err = rows.Scan(
 			&rec.Catalog,
 			&rec.Schema,
 			&rec.FunctionName,
-			&rec.Name,
+			&parameterName,
 			&rec.OrdinalPosition,
-			&rec.Type,
+			&parameterMode,
 			&rec.DataType,
 			&rec.ColumnSize,
 			&rec.DecimalDigits,
@@ -489,6 +506,12 @@ func (s InformationSchema) FunctionColumns(f metadata.Filter) (*metadata.Functio
 		)
 		if err != nil {
 			return nil, err
+		}
+		if parameterName != nil {
+			rec.Name = *parameterName
+		}
+		if parameterMode != nil {
+			rec.Type = *parameterMode
 		}
 		results = append(results, rec)
 	}
@@ -666,7 +689,12 @@ LEFT JOIN information_schema.check_constraints c ON t.constraint_catalog = c.con
 
 	results := []metadata.Constraint{}
 	for rows.Next() {
-		rec := metadata.Constraint{}
+		var (
+			rec = metadata.Constraint{}
+			foreignCatalog, foreignSchema, foreignTable,
+			foreignConstraint, matchOptions, updateRule, deleteRule, checkClause *string
+		)
+
 		err = rows.Scan(
 			&rec.Catalog,
 			&rec.Schema,
@@ -675,17 +703,41 @@ LEFT JOIN information_schema.check_constraints c ON t.constraint_catalog = c.con
 			&rec.Type,
 			&rec.IsDeferrable,
 			&rec.IsInitiallyDeferred,
-			&rec.ForeignCatalog,
-			&rec.ForeignSchema,
-			&rec.ForeignTable,
-			&rec.ForeignName,
-			&rec.MatchType,
-			&rec.UpdateRule,
-			&rec.DeleteRule,
-			&rec.CheckClause,
+			&foreignCatalog,
+			&foreignSchema,
+			&foreignTable,
+			&foreignConstraint,
+			&matchOptions,
+			&updateRule,
+			&deleteRule,
+			&checkClause,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if foreignCatalog != nil {
+			rec.ForeignCatalog = *foreignCatalog
+		}
+		if foreignSchema != nil {
+			rec.ForeignSchema = *foreignSchema
+		}
+		if foreignTable != nil {
+			rec.ForeignTable = *foreignTable
+		}
+		if foreignConstraint != nil {
+			rec.ForeignName = *foreignConstraint
+		}
+		if matchOptions != nil {
+			rec.MatchType = *matchOptions
+		}
+		if updateRule != nil {
+			rec.UpdateRule = *updateRule
+		}
+		if deleteRule != nil {
+			rec.DeleteRule = *deleteRule
+		}
+		if checkClause != nil {
+			rec.CheckClause = *checkClause
 		}
 		results = append(results, rec)
 	}
@@ -777,7 +829,10 @@ LEFT JOIN information_schema.key_column_usage f ON r.unique_constraint_catalog =
 	results := []metadata.ConstraintColumn{}
 	i := 1
 	for rows.Next() {
-		rec := metadata.ConstraintColumn{OrdinalPosition: i}
+		var (
+			rec                                                            = metadata.ConstraintColumn{OrdinalPosition: i}
+			foreignCatalog, foreignSchema, foreignTable, foreignConstraint *string
+		)
 		i++
 		err = rows.Scan(
 			&rec.Catalog,
@@ -786,13 +841,25 @@ LEFT JOIN information_schema.key_column_usage f ON r.unique_constraint_catalog =
 			&rec.Constraint,
 			&rec.Name,
 			&rec.OrdinalPosition,
-			&rec.ForeignCatalog,
-			&rec.ForeignSchema,
-			&rec.ForeignTable,
-			&rec.ForeignName,
+			&foreignCatalog,
+			&foreignSchema,
+			&foreignTable,
+			&foreignConstraint,
 		)
 		if err != nil {
 			return nil, err
+		}
+		if foreignCatalog != nil {
+			rec.ForeignCatalog = *foreignCatalog
+		}
+		if foreignSchema != nil {
+			rec.ForeignSchema = *foreignSchema
+		}
+		if foreignTable != nil {
+			rec.ForeignTable = *foreignTable
+		}
+		if foreignConstraint != nil {
+			rec.ForeignName = *foreignConstraint
 		}
 		results = append(results, rec)
 	}
@@ -961,12 +1028,20 @@ func (s InformationSchema) PrivilegeSummaries(f metadata.Filter) (*metadata.Priv
 	results := []metadata.PrivilegeSummary{}
 	curSummary := &metadata.PrivilegeSummary{}
 	for rows.Next() {
-		r := row{}
-		err = rows.Scan(&r.Catalog, &r.Schema, &r.Name, &r.ObjectType, &r.Column, &r.Grantee, &r.Grantor, &r.PrivilegeType, &r.IsGrantable)
+		var (
+			r               = row{}
+			column, grantee *string
+		)
+		err = rows.Scan(&r.Catalog, &r.Schema, &r.Name, &r.ObjectType, &column, &grantee, &r.Grantor, &r.PrivilegeType, &r.IsGrantable)
 		if err != nil {
 			return nil, err
 		}
-
+		if column != nil {
+			r.Column = *column
+		}
+		if grantee != nil {
+			r.Grantee = *grantee
+		}
 		if curSummary.Catalog != r.Catalog || curSummary.Schema != r.Schema || curSummary.Name != r.Name {
 			summary := metadata.PrivilegeSummary{
 				Catalog:          r.Catalog,

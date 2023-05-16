@@ -194,7 +194,7 @@ func (w DefaultWriter) DescribeTableDetails(u *dburl.URL, pattern string, verbos
 		if !showSystem {
 			// in case the reader doesn't implement WithSystem
 			res.SetFilter(func(r Result) bool {
-				_, ok := w.systemSchemas[r.(*Table).Schema]
+				_, ok := w.systemSchemas[r.(TableProvider).GetTable().Schema]
 				return !ok
 			})
 		}
@@ -588,7 +588,7 @@ func (w DefaultWriter) ListTables(u *dburl.URL, tableTypes, pattern string, verb
 	if !showSystem {
 		// in case the reader doesn't implement WithSystem
 		res.SetFilter(func(r Result) bool {
-			_, ok := w.systemSchemas[r.(*Table).Schema]
+			_, ok := w.systemSchemas[r.(TableProvider).GetTable().Schema]
 			return !ok
 		})
 	}
@@ -603,7 +603,7 @@ func (w DefaultWriter) ListTables(u *dburl.URL, tableTypes, pattern string, verb
 	}
 	res.SetColumns(columns)
 	res.SetScanValues(func(r Result) []interface{} {
-		f := r.(*Table)
+		f := r.(TableProvider).GetTable()
 		v := []interface{}{f.Schema, f.Name, f.Type}
 		if verbose {
 			v = append(v, f.Rows, f.Size, f.Comment)
@@ -631,7 +631,7 @@ func (w DefaultWriter) ListSchemas(u *dburl.URL, pattern string, verbose, showSy
 	if !showSystem {
 		// in case the reader doesn't implement WithSystem
 		res.SetFilter(func(r Result) bool {
-			_, ok := w.systemSchemas[r.(*Schema).Schema]
+			_, ok := w.systemSchemas[r.(SchemaProvider).GetSchema().Schema]
 			return !ok
 		})
 	}
