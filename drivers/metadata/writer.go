@@ -612,7 +612,7 @@ func (w DefaultWriter) ListTables(u *dburl.URL, tableTypes, pattern string, verb
 	})
 
 	params := env.Pall()
-	params["title"] = "List of relations"
+	params["title"] = "List of Sequence"
 	return tblfmt.EncodeAll(w.w, res, params)
 }
 
@@ -818,6 +818,58 @@ func (w DefaultWriter) ListPrivilegeSummaries(u *dburl.URL, pattern string, show
 
 	params := env.Pall()
 	params["title"] = "Access privileges"
+	return tblfmt.EncodeAll(w.w, res, params)
+}
+
+func (w DefaultWriter) ListSequence(u *dburl.URL, tableTypes, pattern string, verbose, showSystem bool) error {
+	r, ok := w.r.(SequenceReader)
+	if !ok {
+		return w.ListTables(u, tableTypes, pattern, verbose, showSystem)
+	}
+	sp, tp, err := parsePattern(pattern)
+	if err != nil {
+		return fmt.Errorf("failed to parse search pattern: %w", err)
+	}
+	res, err := r.Sequences(Filter{Schema: sp, Name: tp, WithSystem: showSystem})
+	if err != nil && err != text.ErrNotSupported {
+		return err
+	}
+	if res == nil {
+		return nil
+	}
+	defer res.Close()
+
+	if !showSystem {
+		// in case the reader doesn't implement WithSystem
+		res.SetFilter(func(r Result) bool {
+			_, ok := w.systemSchemas[r.(*Sequence).Schema]
+			return !ok
+		})
+	}
+	if res.Len() == 0 {
+		fmt.Fprintf(w.w, text.RelationNotFound, pattern)
+		fmt.Fprintln(w.w)
+		return nil
+	}
+
+	columns, _ := res.GetBaseColumn()
+	if len(columns) == 0 {
+		columns = []string{"Schema", "Name", "Type"}
+	}
+	if verbose {
+		columns, _ = res.Columns()
+	}
+	res.SetColumns(columns)
+	res.SetScanValues(func(r Result) []interface{} {
+		v := r.BaseValues()
+		if verbose {
+			v = r.Values()
+		}
+		return v
+	})
+
+	params := env.Pall()
+	params["title"] = "List of relations"
 	return tblfmt.EncodeAll(w.w, res, params)
 }
 

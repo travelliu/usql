@@ -482,3 +482,52 @@ type formats struct {
 	name       string
 	types      string
 }
+
+func (r metaReader) Sequences(f metadata.Filter) (*metadata.SequenceSet, error) {
+	columns := []string{
+		"sequence_owner",
+		"sequence_name",
+		"min_value as start_value",
+		"min_value",
+		"max_value",
+		"increment_by",
+		"cycle_flag",
+		"order_flag",
+		"cache_size",
+		"last_number",
+	}
+	//
+	qstr := "SELECT\n  " + strings.Join(columns, ",\n  ") + " FROM all_sequences\n"
+
+	conds, vals := r.conditions(f, formats{
+		schema:     "sequence_owner LIKE %s",
+		notSchemas: "sequence_owner NOT IN (%s)",
+		name:       "sequence_name LIKE :%d",
+	})
+	if len(conds) != 0 {
+		qstr += " WHERE " + strings.Join(conds, " AND ")
+	}
+	rows, closeRows, err := r.Query(qstr, vals...)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return metadata.NewSequenceSet([]metadata.Sequence{}), nil
+		}
+		return nil, err
+	}
+	defer closeRows()
+
+	results := []metadata.Sequence{}
+	for rows.Next() {
+		rec := metadata.Sequence{}
+		err = rows.Scan(&rec.Schema, &rec.Name, &rec.Start, &rec.Min, &rec.Max, &rec.Increment, &rec.Cycles, &rec.Order, &rec.Cache, &rec.LastNumber)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, rec)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	return metadata.NewSequenceSet(results), nil
+	return nil, nil
+}

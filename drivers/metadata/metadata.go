@@ -2,7 +2,7 @@ package metadata
 
 import (
 	"strings"
-	
+
 	"github.com/xo/dburl"
 	"github.com/xo/usql/text"
 )
@@ -160,6 +160,8 @@ type Writer interface {
 	ShowStats(*dburl.URL, string, string, bool, int) error
 	// ListPrivilegeSummaries \dp
 	ListPrivilegeSummaries(*dburl.URL, string, bool) error
+	// ListSequence \ds
+	ListSequence(*dburl.URL, string, string, bool, bool) error
 }
 
 type CatalogSet struct {
@@ -203,6 +205,10 @@ type Catalog struct {
 
 func (s Catalog) Values() []interface{} {
 	return []interface{}{s.Catalog}
+}
+
+func (s Catalog) BaseValues() []interface{} {
+	return s.Values()
 }
 
 func (s Catalog) GetCatalog() Catalog {
@@ -250,6 +256,10 @@ type Schema struct {
 
 func (s Schema) Values() []interface{} {
 	return []interface{}{s.Schema, s.Catalog}
+}
+
+func (s Schema) BaseValues() []interface{} {
+	return s.Values()
 }
 
 func (s Schema) GetSchema() *Schema {
@@ -321,6 +331,10 @@ func (t Table) Values() []interface{} {
 		t.Size,
 		t.Comment,
 	}
+}
+
+func (t Table) BaseValues() []interface{} {
+	return t.Values()
 }
 
 func (t Table) GetTable() *Table {
@@ -402,6 +416,10 @@ func (c Column) Values() []interface{} {
 	}
 }
 
+func (c Column) BaseValues() []interface{} {
+	return c.Values()
+}
+
 type ColumnStatSet struct {
 	resultSet
 }
@@ -469,6 +487,10 @@ func (c ColumnStat) Values() []interface{} {
 	}
 }
 
+func (c ColumnStat) BaseValues() []interface{} {
+	return c.Values()
+}
+
 type IndexSet struct {
 	resultSet
 }
@@ -523,6 +545,10 @@ func (i Index) Values() []interface{} {
 	}
 }
 
+func (i Index) BaseValues() []interface{} {
+	return i.Values()
+}
+
 type IndexColumnSet struct {
 	resultSet
 }
@@ -571,6 +597,10 @@ func (c IndexColumn) Values() []interface{} {
 		c.Name,
 		c.DataType,
 	}
+}
+
+func (c IndexColumn) BaseValues() []interface{} {
+	return c.Values()
 }
 
 type ConstraintSet struct {
@@ -653,6 +683,10 @@ func (i Constraint) Values() []interface{} {
 	}
 }
 
+func (i Constraint) BaseValues() []interface{} {
+	return i.Values()
+}
+
 type ConstraintColumnSet struct {
 	resultSet
 }
@@ -713,6 +747,10 @@ func (c ConstraintColumn) Values() []interface{} {
 		c.ForeignConstraint,
 		c.ForeignName,
 	}
+}
+
+func (c ConstraintColumn) BaseValues() []interface{} {
+	return c.Values()
 }
 
 type FunctionSet struct {
@@ -777,6 +815,10 @@ func (f Function) Values() []interface{} {
 		f.Language,
 		f.Source,
 	}
+}
+
+func (f Function) BaseValues() []interface{} {
+	return f.Values()
 }
 
 type FunctionColumnSet struct {
@@ -844,6 +886,10 @@ func (c FunctionColumn) Values() []interface{} {
 	}
 }
 
+func (c FunctionColumn) BaseValues() []interface{} {
+	return c.Values()
+}
+
 type SequenceSet struct {
 	resultSet
 }
@@ -856,13 +902,23 @@ func NewSequenceSet(v []Sequence) *SequenceSet {
 	return &SequenceSet{
 		resultSet: resultSet{
 			results: r,
+			baseColumn: []string{
+				"Schema",
+				"Name",
+				"Type",
+			},
 			columns: []string{
+				"Schema",
+				"Name",
 				"Type",
 				"Start",
 				"Min",
 				"Max",
 				"Increment",
+				"Cache",
 				"Cycles?",
+				"Order?",
+				"Last",
 			},
 		},
 	}
@@ -873,25 +929,41 @@ func (s SequenceSet) Get() *Sequence {
 }
 
 type Sequence struct {
-	Catalog   string
-	Schema    string
-	Name      string
-	DataType  string
-	Start     string
-	Min       string
-	Max       string
-	Increment string
-	Cycles    Bool
+	Catalog    string
+	Schema     string
+	Name       string
+	DataType   string
+	Start      string
+	Min        string
+	Max        string
+	Increment  string
+	Cycles     Bool
+	Cache      string
+	Order      Bool
+	LastNumber string
 }
 
 func (s Sequence) Values() []interface{} {
 	return []interface{}{
+		s.Schema,
+		s.Name,
 		s.DataType,
 		s.Start,
 		s.Min,
 		s.Max,
 		s.Increment,
+		s.Cache,
 		s.Cycles,
+		s.Order,
+		s.LastNumber,
+	}
+}
+
+func (s Sequence) BaseValues() []interface{} {
+	return []interface{}{
+		s.Schema,
+		s.Name,
+		s.DataType,
 	}
 }
 
@@ -941,6 +1013,10 @@ func (s PrivilegeSummary) Values() []interface{} {
 		s.ObjectPrivileges,
 		s.ColumnPrivileges,
 	}
+}
+
+func (s PrivilegeSummary) BaseValues() []interface{} {
+	return s.Values()
 }
 
 // ObjectPrivilege represents a privilege granted on a database object.
@@ -1069,6 +1145,7 @@ func lineStr(grantee, grantor string, types []string) string {
 }
 
 type resultSet struct {
+	baseColumn []string
 	results    []Result
 	columns    []string
 	current    int
@@ -1078,6 +1155,7 @@ type resultSet struct {
 
 type Result interface {
 	Values() []interface{}
+	BaseValues() []interface{}
 }
 
 func (r *resultSet) SetFilter(f func(Result) bool) {
@@ -1117,6 +1195,10 @@ func (r *resultSet) Next() bool {
 		}
 	}
 	return r.current <= len(r.results)
+}
+
+func (r resultSet) GetBaseColumn() ([]string, error) {
+	return r.baseColumn, nil
 }
 
 func (r resultSet) Columns() ([]string, error) {
@@ -1168,6 +1250,10 @@ func (t Trigger) Values() []interface{} {
 		t.Name,
 		t.Definition,
 	}
+}
+
+func (t Trigger) BaseValues() []interface{} {
+	return t.Values()
 }
 
 type TriggerSet struct {

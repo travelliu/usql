@@ -14,7 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	
+
 	"gitee.com/opengauss/openGauss-connector-go-pq" // DRIVER
 	"github.com/xo/dburl"
 	"github.com/xo/usql/drivers"

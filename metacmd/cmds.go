@@ -773,8 +773,10 @@ func init() {
 					return m.ListTables(p.Handler.URL(), "tvmsE", pattern, verbose, showSystem)
 				case "df", "da":
 					return m.DescribeFunctions(p.Handler.URL(), name, pattern, verbose, showSystem)
-				case "dt", "dtv", "dtm", "dts", "dv", "dm", "ds":
+				case "dt", "dtv", "dtm", "dts", "dv", "dm":
 					return m.ListTables(p.Handler.URL(), name, pattern, verbose, showSystem)
+				case "ds":
+					return m.ListSequence(p.Handler.URL(), name, pattern, verbose, showSystem)
 				case "dn":
 					return m.ListSchemas(p.Handler.URL(), pattern, verbose, showSystem)
 				case "di":

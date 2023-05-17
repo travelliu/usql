@@ -200,7 +200,7 @@ func WithDataTypeFormatter(f func(metadata.Column) string) metadata.ReaderOption
 	}
 }
 
-func (s *InformationSchema) SetLimit(l int) {
+func (s InformationSchema) SetLimit(l int) {
 	s.limit = l
 }
 
@@ -629,7 +629,7 @@ JOIN information_schema.columns c ON
 	return metadata.NewIndexColumnSet(results), nil
 }
 
-// Constraintes from selected catalog (or all, if empty), matching schemas and names
+// Constraints from selected catalog (or all, if empty), matching schemas and names
 func (s InformationSchema) Constraints(f metadata.Filter) (*metadata.ConstraintSet, error) {
 	if !s.hasConstraints {
 		return nil, text.ErrNotSupported

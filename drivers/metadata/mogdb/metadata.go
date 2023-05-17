@@ -95,6 +95,10 @@ func (s Catalog) Values() []interface{} {
 	return []interface{}{s.Catalog.Catalog, s.Owner, s.Encoding, s.Collate, s.Ctype, s.AccessPrivileges, s.DatCompatibility}
 }
 
+func (s Catalog) BaseValues() []interface{} {
+	return s.Values()
+}
+
 func (s Catalog) GetCatalog() metadata.Catalog {
 	return s.Catalog
 }
